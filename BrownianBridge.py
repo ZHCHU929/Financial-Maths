@@ -47,12 +47,17 @@ def monte_carlo_simulation(N,a):
 # Function for Brownian Bridge simulation
 def brownian_bridge_simulation(N,a):
     payoff_sum = 0.0
+    dt = T/N
+    nudt = (r - 0.5*vol**2)*dt
+    volsdt = vol*np.sqrt(dt)
     np.random.seed(a)
+    S0=100
     for _ in range(M):
         S = S0
-        P = S * np.exp((r - 0.5 * vol**2) * T + vol * np.sqrt(T) * np.random.randn())
+        S0=S*np.exp(nudt + volsdt* np.random.randn())
+        P = S * np.exp((r - 0.5 * vol**2) * dt + vol * np.sqrt(dt) * np.random.randn())
         if (S < B and P < B) or (S > B and P > B):
-            payoff_sum += max(K-P, 0) * (1 - np.exp(-2 * np.log(B/S) * np.log(B/P) / (vol**2 * T)))
+            payoff_sum += max(K-P, 0) * (1 - np.exp(-2 * np.log(B/S) * np.log(B/P) / (vol**2 * dt)))
 
     return np.exp(-r * T) * payoff_sum / M
 
@@ -61,9 +66,8 @@ N_values = range(100, 500, 10)
 mc_results = []
 bb_results = []
 differences = []
-mc = []
-bb = []
-
+mc=[]
+bb=[]
 for N in N_values:
     for i in range (10):
         mc_value = monte_carlo_simulation(N,i)
@@ -72,11 +76,10 @@ for N in N_values:
         bb_results.append(bb_value)
     mc_mean = np.mean(mc_results)
     bb_mean = np.mean(bb_results)
+    differences.append(abs(mc_mean - bb_mean))
     mc.append(mc_mean)
     bb.append(bb_mean)
-    differences.append(abs(mc_mean - bb_mean))
-
-print(differences)
+print(mc_mean)
 # Linear regression for the differences
 slope, intercept, r_value, p_value, std_err = linregress(N_values, differences)
 
@@ -88,13 +91,15 @@ plt.xlabel('Number of Steps (N)')
 plt.ylabel('Absolute Difference between MC and BB')
 plt.title('Difference between Monte Carlo and Brownian Bridge Simulations')
 plt.legend()
-plt.show()
+plt.savefig('diffe')
+plt.close()
 
 plt.figure(figsize=(10, 6))
-plt.plot(N_values,  mc, 'o-', label='Monte Carlo')
+plt.plot(N_values, mc, 'o-', label='Monte Carlo')
 plt.plot(N_values, bb, 'o-', label='Brownian Bridge')
 plt.xlabel('Number of Steps (N)')
-plt.ylabel('average payoff')
-plt.title('Monte Carlo and Brownian Bridge Simulations')
+plt.ylabel('payoff')
+plt.title('Payoff ')
 plt.legend()
-plt.show()
+plt.savefig('payoff')
+plt.close()
